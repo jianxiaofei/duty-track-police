@@ -9,12 +9,12 @@ const { VITE_API_URL } = process.env
 export default defineConfig({
   plugins: [
     react(),
-    visualizer({
-      open: true, // 构建后自动打开分析报告
-      filename: 'stats.html', // 输出文件路径
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    // visualizer({
+    //   open: true, // 构建后自动打开分析报告
+    //   filename: 'stats.html', // 输出文件路径
+    //   gzipSize: true,
+    //   brotliSize: true,
+    // }),
   ],
   css: {
     postcss: './postcss.config.js', // 确保正确指向 PostCSS 配置
@@ -36,20 +36,21 @@ export default defineConfig({
         secure: false,
         rewrite: path => '',
       },
-    },
-  },
-  resolve: {
-    alias: {
+        },
+      },
+      resolve: {
+        alias: {
       '@': path.resolve(__dirname, 'src'),
-    },
-  },
-  root: process.cwd(),
-  publicDir: 'public',
-  base: './',
-  appType: 'spa',
-  build: {
-    minify: 'terser',
-    terserOptions: {
+        },
+      },
+      root: process.cwd(),
+      publicDir: 'public',
+      base: './',
+      appType: 'spa',
+      build: {
+        outDir: 'docs', // 将dist改成docs
+        minify: 'terser',
+        terserOptions: {
       compress: {
         drop_console: true, // 生产环境下移除console
         drop_debugger: true,

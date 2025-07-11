@@ -24,7 +24,37 @@
   box-sizing: border-box;
 }
 
-/* 设备外壳样式 */
+/* 基础移动端适配 */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  height: calc(var(--vh, 1vh) * 100);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 移动端优先的设备外壳样式 */
 .device-container {
   width: 100vw;
   height: 100vh;
@@ -32,85 +62,44 @@
   align-items: center;
   justify-content: center;
   background: radial-gradient(ellipse at center, #2d3748 0%, #1a202c 100%);
-  padding: 20px;
+  padding: 0;
   overflow: hidden;
 }
 
 .device-frame {
-  width: 1320px;
-  height: 760px;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(145deg, #2d3748, #4a5568);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 
-    0 50px 100px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
   position: relative;
   overflow: hidden;
-  animation: deviceBreath 4s ease-in-out infinite;
-}
-
-.device-frame::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  pointer-events: none;
 }
 
 .device-screen {
-  width: 1280px;
-  height: 720px;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
   position: relative;
   z-index: 10;
-  box-shadow: 
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 0 50px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 
-.device-brand {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #a0aec0;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  z-index: 20;
+.device-app-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 10;
 }
 
-.device-indicator {
-  position: absolute;
-  top: 12px;
-  right: 20px;
-  width: 8px;
-  height: 8px;
-  background: #48bb78;
-  border-radius: 50%;
-  box-shadow: 0 0 10px #48bb78;
-  animation: pulse 2s infinite;
-  z-index: 20;
-}
-
+/* 隐藏桌面端装饰元素 */
+.device-brand,
+.device-indicator,
 .device-ports {
-  position: absolute;
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 5;
+  display: none;
 }
 
 .device-port {
@@ -119,13 +108,6 @@
   background: #2d3748;
   border-radius: 2px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.device-app-content {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  z-index: 10;
 }
 
 /* 设备呼吸灯效果 */
@@ -142,21 +124,6 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.15),
       inset 0 -1px 0 rgba(0, 0, 0, 0.4);
   }
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  min-height: 100vh;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-}
-
-#root {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
 }
 
 .glass-effect {
@@ -530,20 +497,175 @@ body {
 
 @media (max-width: 768px) {
   .device-container {
-    padding: 10px;
+    padding: 8px;
   }
   
   .device-frame {
-    padding: 10px;
-    border-radius: 16px;
+    width: 100vw;
+    height: 100vh;
+    padding: 8px;
+    border-radius: 0;
+    box-shadow: none;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .device-frame::before {
+    display: none;
   }
   
   .device-screen {
-    border-radius: 8px;
-    height: calc(100% - 20px);
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
   }
   
   .device-brand {
-    font-size: 8px;
+    display: none;
+  }
+  
+  .device-indicator {
+    display: none;
+  }
+  
+  .device-ports {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .device-container {
+    padding: 0;
+  }
+  
+  .device-frame {
+    border-radius: 0;
+    padding: 0;
+  }
+  
+  .device-screen {
+    border-radius: 0;
+  }
+}
+
+/* 移动端触摸优化 */
+@media (max-width: 768px) {
+  .glass-effect {
+    margin-bottom: 12px;
+    backdrop-filter: blur(8px);
+  }
+  
+  button {
+    min-height: 44px;
+    font-size: 16px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .btn-primary {
+    min-height: 48px;
+    font-size: 16px;
+    padding: 12px 24px;
+  }
+  
+  /* 导航按钮在移动端更大 */
+  .nav-button {
+    padding: 8px 12px;
+    min-height: 40px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 字体大小调整 */
+  .text-xs {
+    font-size: 14px;
+  }
+  
+  .text-sm {
+    font-size: 16px;
+  }
+  
+  .text-base {
+    font-size: 18px;
+  }
+  
+  .text-lg {
+    font-size: 20px;
+  }
+  
+  .text-xl {
+    font-size: 24px;
+  }
+  
+  .text-2xl {
+    font-size: 28px;
+  }
+  
+  /* 移动端安全区域适配 */
+  .safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* 移动端滚动优化 */
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* 移动端横屏优化 */
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    .mobile-card {
+      padding: 12px;
+      margin: 4px;
+    }
+    
+    .mobile-padding {
+      padding: 12px;
+    }
+    
+    .text-2xl {
+      font-size: 24px;
+    }
+    
+    .text-xl {
+      font-size: 20px;
+    }
+  }
+}
+
+/* 移动端专用样式 */
+@media (max-width: 768px) {
+  .mobile-padding {
+    padding: 16px;
+  }
+  
+  .mobile-margin {
+    margin: 8px;
+  }
+  
+  .mobile-text {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .mobile-button {
+    min-height: 48px;
+    font-size: 16px;
+    padding: 12px 16px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .mobile-nav {
+    padding: 12px 16px;
+  }
+  
+  .mobile-card {
+    padding: 16px;
+    margin: 8px;
+    border-radius: 12px;
   }
 }

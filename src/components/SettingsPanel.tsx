@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Settings, Trash2, RefreshCw, Save, Volume2, VolumeX, Moon, Sun, Clock, Palette } from 'lucide-react'
 import { themes, type Theme } from '../themes'
@@ -28,6 +28,26 @@ export default function SettingsPanel({
   onClearRecords, onExportSettings, onImportSettings 
 }: SettingsPanelProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // 检测移动端设备
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      setIsMobile(isMobileDevice)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkMobile, 100)
+    })
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('orientationchange', checkMobile)
+    }
+  }, [])
 
   const handleClearRecords = () => {
     if (showConfirmDialog) {
@@ -202,12 +222,12 @@ export default function SettingsPanel({
               <Clock className="w-5 h-5 text-blue-400" />
               <div>
                 <div className="text-white font-medium">签到间隔设置</div>
-                <div className="text-white/60 text-sm">设置两次签到之间的最小间隔时间</div>
+                <div className="text-white/60 text-sm">设置成功签到后的冷却时间</div>
               </div>
             </div>
             
             <div>
-              <label className="block text-white/80 text-sm mb-2">间隔时间 (小时)</label>
+              <label className="block text-white/80 text-sm mb-2">冷却时间 (小时)</label>
               <input
                 type="range"
                 min="1"
@@ -217,7 +237,7 @@ export default function SettingsPanel({
                 className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
               />
               <div className="text-center text-white/60 text-sm mt-2">
-                每 {checkInInterval} 小时可签到一次
+                当前设置：每 {checkInInterval} 小时可签到一次
               </div>
             </div>
           </motion.div>

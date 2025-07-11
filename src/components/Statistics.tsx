@@ -21,6 +21,25 @@ export default function Statistics({ records }: StatisticsProps) {
   const [totalCheckIns, setTotalCheckIns] = useState(0)
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      setIsMobile(isMobileDevice)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkMobile, 100)
+    })
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('orientationchange', checkMobile)
+    }
+  }, [])
 
   useEffect(() => {
     const now = new Date()
@@ -95,19 +114,21 @@ export default function Statistics({ records }: StatisticsProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-effect rounded-2xl p-6 space-y-6"
+      className={`glass-effect rounded-2xl space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <BarChart3 className="w-6 h-6 text-blue-300" />
-          <h2 className="text-xl font-bold text-white">签到统计</h2>
+          <BarChart3 className={`text-blue-300 ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
+          <h2 className={`font-bold text-white ${isMobile ? 'text-lg' : 'text-xl'}`}>签到统计</h2>
         </div>
         
         {/* 视图切换按钮 */}
         <div className="flex items-center space-x-2 bg-white/10 rounded-lg p-1">
           <button
             onClick={() => setViewMode('week')}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+            className={`rounded-md font-medium transition-all duration-200 ${
+              isMobile ? 'px-3 py-2 text-sm' : 'px-3 py-1 text-xs'
+            } ${
               viewMode === 'week' 
                 ? 'bg-blue-500 text-white shadow-lg' 
                 : 'text-white/70 hover:text-white'
@@ -117,7 +138,9 @@ export default function Statistics({ records }: StatisticsProps) {
           </button>
           <button
             onClick={() => setViewMode('month')}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+            className={`rounded-md font-medium transition-all duration-200 ${
+              isMobile ? 'px-3 py-2 text-sm' : 'px-3 py-1 text-xs'
+            } ${
               viewMode === 'month' 
                 ? 'bg-blue-500 text-white shadow-lg' 
                 : 'text-white/70 hover:text-white'
@@ -129,28 +152,28 @@ export default function Statistics({ records }: StatisticsProps) {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="glass-effect rounded-xl p-4 text-center">
-          <Calendar className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-white">{totalCheckIns}</div>
-          <div className="text-xs text-white/70">总签到次数</div>
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+        <div className={`glass-effect rounded-xl text-center ${isMobile ? 'p-6' : 'p-4'}`}>
+          <Calendar className={`text-blue-400 mx-auto mb-2 ${isMobile ? 'w-8 h-8' : 'w-6 h-6'}`} />
+          <div className={`font-bold text-white ${isMobile ? 'text-3xl' : 'text-2xl'}`}>{totalCheckIns}</div>
+          <div className={`text-white/70 ${isMobile ? 'text-sm' : 'text-xs'}`}>总签到次数</div>
         </div>
         
-        <div className="glass-effect rounded-xl p-4 text-center">
-          <TrendingUp className="w-6 h-6 text-green-400 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-white">{monthlySuccess}%</div>
-          <div className="text-xs text-white/70">本月成功率</div>
+        <div className={`glass-effect rounded-xl text-center ${isMobile ? 'p-6' : 'p-4'}`}>
+          <TrendingUp className={`text-green-400 mx-auto mb-2 ${isMobile ? 'w-8 h-8' : 'w-6 h-6'}`} />
+          <div className={`font-bold text-white ${isMobile ? 'text-3xl' : 'text-2xl'}`}>{monthlySuccess}%</div>
+          <div className={`text-white/70 ${isMobile ? 'text-sm' : 'text-xs'}`}>本月成功率</div>
         </div>
         
-        <div className="glass-effect rounded-xl p-4 text-center">
-          <Award className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-white">
+        <div className={`glass-effect rounded-xl text-center ${isMobile ? 'p-6' : 'p-4'}`}>
+          <Award className={`text-yellow-400 mx-auto mb-2 ${isMobile ? 'w-8 h-8' : 'w-6 h-6'}`} />
+          <div className={`font-bold text-white ${isMobile ? 'text-3xl' : 'text-2xl'}`}>
             {viewMode === 'week' 
               ? weeklyStats.reduce((a, b) => a + b, 0)
               : monthlyStats.reduce((a, b) => a + b, 0)
             }
           </div>
-          <div className="text-xs text-white/70">
+          <div className={`text-white/70 ${isMobile ? 'text-sm' : 'text-xs'}`}>
             {viewMode === 'week' ? '本周签到' : '本月签到'}
           </div>
         </div>

@@ -17,10 +17,22 @@ interface NotificationSystemProps {
 
 const NotificationItem = ({ notification, onRemove }: { notification: Notification; onRemove: (id: string) => void }) => {
   const { id, type, title, message, duration = 5000 } = notification
+  const [isMobile, setIsMobile] = useState(false)
 
   const handleRemove = useCallback(() => {
     onRemove(id)
   }, [id, onRemove])
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (duration > 0) {
@@ -70,21 +82,25 @@ const NotificationItem = ({ notification, onRemove }: { notification: Notificati
           ease: "easeIn"
         } 
       }}
-      className={`glass-effect rounded-lg p-3 border ${getColors()} w-full shadow-lg notification-enter`}
+      className={`glass-effect rounded-lg border ${getColors()} w-full shadow-lg notification-enter ${
+        isMobile ? 'p-4' : 'p-3'
+      }`}
     >
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0 mt-0.5">
           {getIcon()}
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-white">{title}</h4>
-          <p className="text-xs text-white/70 mt-1 break-words">{message}</p>
+          <h4 className={`font-semibold text-white ${isMobile ? 'text-base' : 'text-sm'}`}>{title}</h4>
+          <p className={`text-white/70 mt-1 break-words ${isMobile ? 'text-sm' : 'text-xs'}`}>{message}</p>
         </div>
         <button
           onClick={handleRemove}
-          className="flex-shrink-0 text-white/50 hover:text-white transition-colors"
+          className={`flex-shrink-0 text-white/50 hover:text-white transition-colors ${
+            isMobile ? 'p-1' : ''
+          }`}
         >
-          <X className="w-4 h-4" />
+          <X className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
         </button>
       </div>
     </motion.div>
@@ -92,8 +108,25 @@ const NotificationItem = ({ notification, onRemove }: { notification: Notificati
 }
 
 export default function NotificationSystem({ notifications, onRemove }: NotificationSystemProps) {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   return (
-    <div className="absolute top-4 right-4 z-50 space-y-2 max-w-xs">
+    <div className={`absolute z-50 space-y-2 ${
+      isMobile 
+        ? 'top-2 left-2 right-2 max-w-none' 
+        : 'top-4 right-4 max-w-xs'
+    }`}>
       <AnimatePresence mode="popLayout">
         {notifications.map((notification) => (
           <NotificationItem

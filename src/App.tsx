@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Clock, MapPin, CheckCircle, XCircle, Calendar, AlertTriangle, BarChart3, Download, Home, Settings } from 'lucide-react'
+import { Shield, Clock, MapPin, CheckCircle, XCircle, Calendar, AlertTriangle, BarChart3, Download, Home, Settings, RefreshCw } from 'lucide-react'
 import Statistics from './components/Statistics'
 import LocationMap from './components/LocationMap'
 import ExportPanel from './components/ExportPanel'
@@ -35,7 +35,8 @@ const VALID_LOCATIONS = [
 
 // 获取模拟GPS坐标
 const getMockGPSLocation = (): { lat: number; lng: number } => {
-  const isValid = Math.random() > 0.3
+  // 提高有效位置的概率，让体验更好
+  const isValid = Math.random() > 0.25 // 75% 概率在有效位置
   
   if (isValid) {
     const validLocation = VALID_LOCATIONS[Math.floor(Math.random() * VALID_LOCATIONS.length)]
@@ -44,9 +45,10 @@ const getMockGPSLocation = (): { lat: number; lng: number } => {
       lng: validLocation.lng + (Math.random() - 0.5) * validLocation.range
     }
   } else {
+    // 生成稍微远离有效区域的位置
     return {
-      lat: 31.23 + (Math.random() - 0.5) * 0.1,
-      lng: 121.47 + (Math.random() - 0.5) * 0.1
+      lat: 31.23 + (Math.random() - 0.5) * 0.05,
+      lng: 121.47 + (Math.random() - 0.5) * 0.05
     }
   }
 }
@@ -89,12 +91,67 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'stats' | 'map' | 'export' | 'settings'>('home')
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [isLocationValid, setIsLocationValid] = useState<boolean | null>(null)
+  const [isLocationLoading, setIsLocationLoading] = useState(true)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [darkMode, setDarkMode] = useState(true)
   const [autoCheckIn, setAutoCheckIn] = useState(false)
   const [checkInInterval, setCheckInInterval] = useState(4)
   const [currentTheme, setCurrentTheme] = useState<string>('classic-purple')
+  const [isMobile, setIsMobile] = useState(false)
+
+  // 检测移动端设备
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      setIsMobile(isMobileDevice)
+      
+      // 设置视口高度变量（解决移动端浏览器地址栏问题）
+      const vh = window.innerHeight * 0.01
+      document.documentElement.style.setProperty('--vh', `${vh}px`)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkMobile, 100)
+    })
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+      window.removeEventListener('orientationchange', checkMobile)
+    }
+  }, [])
+
+  // 初始位置获取
+  useEffect(() => {
+    const initializeLocation = async () => {
+      setIsLocationLoading(true)
+      
+      // 模拟位置获取延迟（1-2秒）
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000))
+      
+      const coordinates = getMockGPSLocation()
+      const { isValid } = validateLocation(coordinates)
+      
+      setCurrentLocation(coordinates)
+      setIsLocationValid(isValid)
+      setIsLocationLoading(false)
+    }
+    
+    initializeLocation()
+    
+    // 每5分钟更新一次位置信息（模拟真实场景）
+    const locationUpdateInterval = setInterval(() => {
+      const coordinates = getMockGPSLocation()
+      const { isValid } = validateLocation(coordinates)
+      
+      setCurrentLocation(coordinates)
+      setIsLocationValid(isValid)
+    }, 5 * 60 * 1000) // 5分钟
+    
+    return () => clearInterval(locationUpdateInterval)
+  }, [])
 
   // 实时更新时间
   useEffect(() => {
@@ -192,20 +249,21 @@ export default function App() {
 
   // 执行签到
   const handleCheckIn = async () => {
-    if (isCheckingIn) return
+    if (isCheckingIn || !canCheckIn() || isLocationLoading) return
 
     setIsCheckingIn(true)
     setLastCheckInStatus(null)
 
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    const now = new Date()
+    // 在签到时重新获取最新位置
     const coordinates = getMockGPSLocation()
     const { isValid, locationName } = validateLocation(coordinates)
 
     setCurrentLocation(coordinates)
     setIsLocationValid(isValid)
 
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    const now = new Date()
     const newRecord: CheckInRecord = {
       id: Date.now().toString(),
       time: formatTime(now),
@@ -231,7 +289,7 @@ export default function App() {
       addNotification({
         type: 'success',
         title: '签到成功',
-        message: `已在${locationName}成功签到`,
+        message: `已在${locationName}成功签到，下次可签到时间：${checkInInterval}小时后`,
         duration: 5000
       })
     } else {
@@ -262,18 +320,70 @@ export default function App() {
   // 防重复签到逻辑
   const canCheckIn = () => {
     const now = new Date()
-    const lastRecord = checkInRecords.find(record => 
+    const lastSuccessRecord = checkInRecords.find(record => 
       new Date(record.time).toDateString() === now.toDateString() &&
       record.status === 'success'
     )
     
-    if (!lastRecord) return true
+    if (!lastSuccessRecord) return true
     
-    const lastCheckInTime = new Date(lastRecord.time)
+    const lastCheckInTime = new Date(lastSuccessRecord.time)
     const timeDiff = now.getTime() - lastCheckInTime.getTime()
     const hoursDiff = timeDiff / (1000 * 60 * 60)
     
     return hoursDiff >= checkInInterval
+  }
+
+  // 获取下次可签到时间
+  const getNextCheckInTime = () => {
+    const now = new Date()
+    const lastSuccessRecord = checkInRecords.find(record => 
+      new Date(record.time).toDateString() === now.toDateString() &&
+      record.status === 'success'
+    )
+    
+    if (!lastSuccessRecord) return null
+    
+    const lastCheckInTime = new Date(lastSuccessRecord.time)
+    const nextCheckInTime = new Date(lastCheckInTime.getTime() + (checkInInterval * 60 * 60 * 1000))
+    
+    return nextCheckInTime > now ? nextCheckInTime : null
+  }
+
+  // 获取冷却剩余时间
+  const getCooldownRemaining = () => {
+    const nextTime = getNextCheckInTime()
+    if (!nextTime) return null
+    
+    const now = new Date()
+    const remaining = nextTime.getTime() - now.getTime()
+    const hoursRemaining = Math.floor(remaining / (1000 * 60 * 60))
+    const minutesRemaining = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))
+    
+    return { hours: hoursRemaining, minutes: minutesRemaining }
+  }
+
+  // 手动刷新位置
+  const refreshLocation = async () => {
+    setIsLocationLoading(true)
+    
+    // 模拟位置获取延迟
+    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400))
+    
+    const coordinates = getMockGPSLocation()
+    const { isValid } = validateLocation(coordinates)
+    
+    setCurrentLocation(coordinates)
+    setIsLocationValid(isValid)
+    setIsLocationLoading(false)
+    
+    // 位置更新反馈
+    addNotification({
+      type: 'info',
+      title: '位置已更新',
+      message: isValid ? '当前位置在有效签到区域内' : '当前位置不在有效签到区域内',
+      duration: 3000
+    })
   }
 
   // 清除签到记录
@@ -358,14 +468,85 @@ export default function App() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-effect rounded-2xl p-4 text-center"
+        className={`glass-effect rounded-2xl p-4 text-center ${isMobile ? 'mobile-card' : ''}`}
       >
         <div className="flex items-center justify-center space-x-2 mb-2">
-          <Clock className="w-4 h-4 text-blue-300" />
-          <span className="text-blue-200 text-sm">当前时间</span>
+          <Clock className={`text-blue-300 ${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
+          <span className={`text-blue-200 ${isMobile ? 'text-base' : 'text-sm'}`}>当前时间</span>
         </div>
-        <div className="text-xl font-mono text-white tracking-wide">
+        <div className={`font-mono text-white tracking-wide ${isMobile ? 'text-2xl' : 'text-xl'}`}>
           {formatTime(currentTime)}
+        </div>
+      </motion.div>
+
+      {/* 主要签到按钮 */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.2 }}
+        className={`glass-effect rounded-2xl p-4 ${isMobile ? 'mobile-card' : ''}`}
+      >
+        <button
+          onClick={handleCheckIn}
+          disabled={isCheckingIn || !canCheckIn() || isLocationLoading}
+          className={`w-full btn-primary rounded-xl font-medium transition-all duration-300 ${
+            isCheckingIn || !canCheckIn() || isLocationLoading
+              ? 'cursor-not-allowed opacity-50 bg-gray-500/50' 
+              : 'hover:shadow-lg transform hover:scale-105'
+          } ${isMobile ? 'mobile-button text-lg py-4' : 'py-3 text-base'}`}
+        >
+          <div className="flex items-center justify-center space-x-2">
+            {isCheckingIn ? (
+              <>
+                <div className="loading-spinner w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>签到中...</span>
+              </>
+            ) : !canCheckIn() ? (
+              <>
+                <AlertTriangle className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} />
+                <span>签到冷却中</span>
+              </>
+            ) : (
+              <>
+                <Shield className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} />
+                <span>立即签到</span>
+              </>
+            )}
+          </div>
+        </button>
+
+        {/* 位置信息 */}
+        <div className={`mt-3 text-center ${isMobile ? 'text-sm' : 'text-xs'}`}>
+          <div className="flex items-center justify-center space-x-1">
+            {isLocationLoading ? (
+              <>
+                <div className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-blue-200">正在获取位置...</span>
+              </>
+            ) : (
+              <>
+                <MapPin className={`${isLocationValid ? 'text-green-400' : 'text-red-400'} ${isMobile ? 'w-4 h-4' : 'w-3 h-3'}`} />
+                <span className={`${isLocationValid ? 'text-green-200' : 'text-red-200'}`}>
+                  {isLocationValid ? '位置验证通过' : '位置验证失败'}
+                </span>
+                <button
+                  onClick={refreshLocation}
+                  className="ml-2 p-1 rounded-full hover:bg-white/10 transition-colors"
+                  title="刷新位置"
+                >
+                  <RefreshCw className="w-3 h-3 text-white/60 hover:text-white/80" />
+                </button>
+              </>
+            )}
+          </div>
+          <p className={`text-white/60 mt-1 ${isMobile ? 'text-sm' : 'text-xs'}`}>
+            {isLocationLoading 
+              ? '正在确定您的位置信息' 
+              : isLocationValid 
+                ? '您正在有效签到区域内' 
+                : '请移动到有效签到区域'
+            }
+          </p>
         </div>
       </motion.div>
 
@@ -376,7 +557,7 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: -20 }}
-            className={`glass-effect rounded-2xl p-3 ${
+            className={`glass-effect rounded-2xl p-3 ${isMobile ? 'mobile-card' : ''} ${
               lastCheckInStatus === 'success' ? 'ring-2 ring-green-400/50' : 'ring-2 ring-red-400/50'
             }`}
           >
@@ -387,12 +568,12 @@ export default function App() {
                 <XCircle className="w-5 h-5 text-red-400" />
               )}
               <div>
-                <p className={`font-medium text-sm ${
+                <p className={`font-medium ${isMobile ? 'text-base' : 'text-sm'} ${
                   lastCheckInStatus === 'success' ? 'text-green-400' : 'text-red-400'
                 }`}>
                   {lastCheckInStatus === 'success' ? '签到成功！' : '签到失败！'}
                 </p>
-                <p className="text-white/60 text-xs">
+                <p className={`text-white/60 ${isMobile ? 'text-sm' : 'text-xs'}`}>
                   {lastCheckInStatus === 'success' ? '已记录本次签到' : '位置验证失败'}
                 </p>
               </div>
@@ -405,14 +586,14 @@ export default function App() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-effect rounded-2xl p-4"
+        className={`glass-effect rounded-2xl p-4 ${isMobile ? 'mobile-card' : ''}`}
       >
         <div className="text-center mb-3">
           <div className="flex items-center justify-center space-x-2 mb-2">
             <MapPin className="w-4 h-4 text-purple-300" />
-            <span className="text-purple-200 text-sm">今日签到状态</span>
+            <span className={`text-purple-200 ${isMobile ? 'text-base' : 'text-sm'}`}>今日签到状态</span>
           </div>
-          <span className="text-lg font-semibold text-white">
+          <span className={`font-semibold text-white ${isMobile ? 'text-xl' : 'text-lg'}`}>
             已签到 {todayCheckInCount} 次
           </span>
         </div>
@@ -421,46 +602,26 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="mb-3 p-2 bg-yellow-500/20 rounded-lg border border-yellow-400/30"
+            className={`mb-3 p-2 bg-yellow-500/20 rounded-lg border border-yellow-400/30 ${isMobile ? 'p-3' : ''}`}
           >
             <div className="flex items-center space-x-2">
               <AlertTriangle className="w-4 h-4 text-yellow-400" />
-              <span className="text-yellow-200 text-xs">
-                签到冷却中，请{checkInInterval}小时后再试
+              <span className={`text-yellow-200 ${isMobile ? 'text-sm' : 'text-xs'}`}>
+                {(() => {
+                  const remaining = getCooldownRemaining()
+                  if (remaining) {
+                    if (remaining.hours > 0) {
+                      return `签到冷却中，还需 ${remaining.hours} 小时 ${remaining.minutes} 分钟`
+                    } else {
+                      return `签到冷却中，还需 ${remaining.minutes} 分钟`
+                    }
+                  }
+                  return `签到冷却中，请稍后再试`
+                })()}
               </span>
             </div>
           </motion.div>
         )}
-
-        <motion.button
-          whileHover={{ scale: canCheckIn() ? 1.02 : 1 }}
-          whileTap={{ scale: canCheckIn() ? 0.98 : 1 }}
-          onClick={handleCheckIn}
-          disabled={!canCheckIn() || isCheckingIn}
-          className={`w-full py-3 rounded-xl font-semibold text-base transition-all duration-300 ${
-            canCheckIn() && !isCheckingIn
-              ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
-              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          <div className="flex items-center justify-center space-x-2">
-            {isCheckingIn ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                />
-                <span>正在签到...</span>
-              </>
-            ) : (
-              <>
-                <MapPin className="w-4 h-4" />
-                <span>立即签到</span>
-              </>
-            )}
-          </div>
-        </motion.button>
       </motion.div>
 
       {/* 今日签到记录 */}
@@ -468,24 +629,24 @@ export default function App() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="glass-effect rounded-2xl p-4"
+        className={`glass-effect rounded-2xl p-4 ${isMobile ? 'mobile-card' : ''}`}
       >
         <div className="flex items-center space-x-2 mb-3">
           <Calendar className="w-4 h-4 text-green-300" />
-          <span className="text-green-200 text-sm font-medium">今日签到记录</span>
+          <span className={`text-green-200 font-medium ${isMobile ? 'text-base' : 'text-sm'}`}>今日签到记录</span>
         </div>
         
         {todayRecords.length === 0 ? (
-          <p className="text-white/60 text-center py-3 text-sm">暂无签到记录</p>
+          <p className={`text-white/60 text-center py-3 ${isMobile ? 'text-base' : 'text-sm'}`}>暂无签到记录</p>
         ) : (
-          <div className="space-y-2 max-h-32 overflow-y-auto">
+          <div className={`space-y-2 overflow-y-auto ${isMobile ? 'max-h-40' : 'max-h-32'}`}>
             {todayRecords.slice(0, 3).map((record, index) => (
               <motion.div
                 key={record.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`p-2 rounded-lg ${
+                className={`rounded-lg ${isMobile ? 'p-3' : 'p-2'} ${
                   record.status === 'success' 
                     ? 'bg-green-500/20 border border-green-400/30' 
                     : 'bg-red-500/20 border border-red-400/30'
@@ -498,21 +659,21 @@ export default function App() {
                     ) : (
                       <XCircle className="w-3 h-3 text-red-400" />
                     )}
-                    <span className={`text-xs font-medium ${
+                    <span className={`font-medium ${isMobile ? 'text-sm' : 'text-xs'} ${
                       record.status === 'success' ? 'text-green-200' : 'text-red-200'
                     }`}>
                       {record.status === 'success' ? '签到成功' : '签到失败'}
                     </span>
                   </div>
-                  <span className="text-white/60 text-xs">
+                  <span className={`text-white/60 ${isMobile ? 'text-sm' : 'text-xs'}`}>
                     {record.time.split(' ')[1]}
                   </span>
                 </div>
-                <p className="text-white/60 text-xs mt-1">{record.location}</p>
+                <p className={`text-white/60 mt-1 ${isMobile ? 'text-sm' : 'text-xs'}`}>{record.location}</p>
               </motion.div>
             ))}
             {todayRecords.length > 3 && (
-              <p className="text-white/60 text-xs text-center">
+              <p className={`text-white/60 text-center ${isMobile ? 'text-sm' : 'text-xs'}`}>
                 还有 {todayRecords.length - 3} 条记录...
               </p>
             )}
@@ -525,11 +686,11 @@ export default function App() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="text-center text-white/60 text-xs"
+        className={`text-center text-white/60 ${isMobile ? 'text-sm' : 'text-xs'}`}
       >
         <p>系统会自动验证签到位置的有效性</p>
         <p className="mt-1">有效签到区域：监狱东门、西门、办公楼</p>
-        <p className="mt-1 text-yellow-400/60">注：每{checkInInterval}小时可签到一次</p>
+        <p className="mt-1 text-yellow-400/60">注：签到间隔时间可在设置中调整</p>
       </motion.div>
     </div>
   )
@@ -552,15 +713,19 @@ export default function App() {
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass-effect rounded-2xl p-4 m-4 mb-0 flex-shrink-0"
+                className={`glass-effect rounded-2xl flex-shrink-0 ${
+                  isMobile ? 'mobile-nav m-2 mb-0' : 'p-4 m-4 mb-0'
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Shield className="w-6 h-6 text-yellow-400" />
-                    <span className="text-white font-bold hidden sm:block">狱警值班系统</span>
+                    <span className={`text-white font-bold ${isMobile ? 'text-lg' : 'hidden sm:block'}`}>
+                      {isMobile ? '狱警系统' : '狱警值班系统'}
+                    </span>
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className={`flex ${isMobile ? 'space-x-1' : 'space-x-2'}`}>
                     {[
                       { key: 'home', icon: Home, label: '首页' },
                       { key: 'stats', icon: BarChart3, label: '统计' },
@@ -573,15 +738,17 @@ export default function App() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setActiveTab(key as typeof activeTab)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                        className={`rounded-lg font-medium transition-all duration-300 ${
+                          isMobile ? 'nav-button p-2 min-w-[44px]' : 'px-3 py-2 text-sm'
+                        } ${
                           activeTab === key 
                             ? 'bg-blue-500 text-white shadow-lg' 
                             : 'text-white/70 hover:text-white hover:bg-white/10'
                         }`}
                       >
-                        <div className="flex items-center space-x-1">
-                          <Icon className="w-4 h-4" />
-                          <span className="hidden sm:block">{label}</span>
+                        <div className={`flex items-center ${isMobile ? 'justify-center' : 'space-x-1'}`}>
+                          <Icon className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                          <span className={`${isMobile ? 'sr-only' : 'hidden sm:block'}`}>{label}</span>
                         </div>
                       </motion.button>
                     ))}
@@ -596,23 +763,23 @@ export default function App() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="flex-1 overflow-hidden p-4 pt-4"
+                className={`flex-1 overflow-hidden ${isMobile ? 'mobile-padding pt-2' : 'p-4 pt-4'}`}
               >
-                <div className="h-full overflow-y-auto">
+                <div className={`h-full overflow-y-auto ${isMobile ? 'scrollable' : ''}`}>
                   {activeTab === 'home' && (
-                    <div className="max-w-md mx-auto">
+                    <div className={`mx-auto ${isMobile ? 'max-w-full px-2' : 'max-w-md'}`}>
                       {renderHome()}
                     </div>
                   )}
                   
                   {activeTab === 'stats' && (
-                    <div className="max-w-2xl mx-auto">
+                    <div className={`mx-auto ${isMobile ? 'max-w-full px-2' : 'max-w-2xl'}`}>
                       <Statistics records={checkInRecords} />
                     </div>
                   )}
                   
                   {activeTab === 'map' && (
-                    <div className="max-w-2xl mx-auto">
+                    <div className={`mx-auto ${isMobile ? 'max-w-full px-2' : 'max-w-2xl'}`}>
                       <LocationMap 
                         currentLocation={currentLocation ?? undefined} 
                         isValid={isLocationValid ?? undefined} 
@@ -621,13 +788,13 @@ export default function App() {
                   )}
                   
                   {activeTab === 'export' && (
-                    <div className="max-w-2xl mx-auto">
+                    <div className={`mx-auto ${isMobile ? 'max-w-full px-2' : 'max-w-2xl'}`}>
                       <ExportPanel records={checkInRecords} />
                     </div>
                   )}
 
                   {activeTab === 'settings' && (
-                    <div className="max-w-2xl mx-auto">
+                    <div className={`mx-auto ${isMobile ? 'max-w-full px-2' : 'max-w-2xl'}`}>
                       <SettingsPanel 
                         soundEnabled={soundEnabled}
                         setSoundEnabled={setSoundEnabled}

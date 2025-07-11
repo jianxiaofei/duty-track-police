@@ -162,7 +162,6 @@ export const themes: Theme[] = [
       },
     },
   },
-
   {
     id: "minimal-gray",
     name: "极简灰",
@@ -187,6 +186,33 @@ export const themes: Theme[] = [
         warning: "#F59E0B",
         error: "#EF4444",
         info: "#3B82F6",
+      },
+    },
+  },
+  {
+    id: "advanced-black",
+    name: "高级黑",
+    description: "深邃的黑色主题，适合专业场合",
+    colors: {
+      primary: "#111827",
+      secondary: "#1F2937",
+      accent: "#FBBF24",
+      background:
+        "radial-gradient(ellipse at center, #0F172A 0%, #020617 100%)",
+      deviceFrame: "linear-gradient(145deg, #111827, #1F2937)",
+      deviceScreen: "linear-gradient(135deg, #111827 0%, #0F172A 100%)",
+      glass: "rgba(31, 41, 55, 0.15)",
+      glassBorder: "rgba(75, 85, 99, 0.25)",
+      text: {
+        primary: "#F3F4F6",
+        secondary: "#D1D5DB",
+        muted: "#9CA3AF",
+      },
+      status: {
+        success: "#16A34A",
+        warning: "#EAB308",
+        error: "#DC2626",
+        info: "#2563EB",
       },
     },
   },

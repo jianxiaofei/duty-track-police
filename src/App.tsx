@@ -94,7 +94,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(true)
   const [autoCheckIn, setAutoCheckIn] = useState(false)
   const [checkInInterval, setCheckInInterval] = useState(4)
-  const [currentTheme, setCurrentTheme] = useState<string>('prison-dark')
+  const [currentTheme, setCurrentTheme] = useState<string>('classic-purple')
 
   // 实时更新时间
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function App() {
       setDarkMode(settings.darkMode ?? true)
       setAutoCheckIn(settings.autoCheckIn ?? false)
       setCheckInInterval(settings.checkInInterval ?? 4)
-      setCurrentTheme(settings.currentTheme ?? 'prison-dark')
+      setCurrentTheme(settings.currentTheme ?? 'classic-purple')
     }
   }, [])
 

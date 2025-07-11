@@ -82,6 +82,29 @@ const formatTime = (date: Date): string => {
   })
 }
 
+// 美化时间显示
+const formatTimeBeautiful = (date: Date) => {
+  const formatOptions = {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  } as const
+  
+  const timeString = date.toLocaleString('zh-CN', formatOptions)
+  const [datePart, timePart] = timeString.split(' ')
+  
+  return {
+    date: datePart,
+    time: timePart,
+    weekday: date.toLocaleDateString('zh-CN', { weekday: 'long' }),
+    period: date.getHours() >= 12 ? '下午' : '上午'
+  }
+}
+
 export default function App() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [checkInRecords, setCheckInRecords] = useState<CheckInRecord[]>([])
@@ -470,13 +493,42 @@ export default function App() {
         animate={{ opacity: 1, scale: 1 }}
         className={`glass-effect rounded-2xl p-4 text-center ${isMobile ? 'mobile-card' : ''}`}
       >
-        <div className="flex items-center justify-center space-x-2 mb-2">
+        <div className="flex items-center justify-center space-x-2 mb-3">
           <Clock className={`text-blue-300 ${isMobile ? 'w-5 h-5' : 'w-4 h-4'}`} />
           <span className={`text-blue-200 ${isMobile ? 'text-base' : 'text-sm'}`}>当前时间</span>
         </div>
-        <div className={`font-mono text-white tracking-wide ${isMobile ? 'text-2xl' : 'text-xl'}`}>
-          {formatTime(currentTime)}
-        </div>
+        
+        {(() => {
+          const timeData = formatTimeBeautiful(currentTime)
+          return (
+            <div className="space-y-2">
+              {/* 主要时间显示 */}
+              <div className={`font-mono text-white tracking-wider ${isMobile ? 'text-3xl' : 'text-2xl'} font-bold`}>
+                {timeData.time}
+              </div>
+              
+              {/* 日期和星期 */}
+              <div className="flex items-center justify-center space-x-3">
+                <div className={`text-blue-100 ${isMobile ? 'text-base' : 'text-sm'}`}>
+                  {timeData.date}
+                </div>
+                <div className={`px-2 py-1 bg-blue-500/30 rounded-full text-blue-100 ${isMobile ? 'text-sm' : 'text-xs'}`}>
+                  {timeData.weekday}
+                </div>
+                <div className={`text-blue-200 ${isMobile ? 'text-sm' : 'text-xs'}`}>
+                  {timeData.period}
+                </div>
+              </div>
+              
+              {/* 装饰性秒针动画 */}
+              <div className="flex items-center justify-center space-x-1 mt-2">
+                <div className={`w-2 h-2 rounded-full bg-blue-400 animate-pulse ${currentTime.getSeconds() % 2 === 0 ? 'opacity-100' : 'opacity-50'}`}></div>
+                <div className={`w-1 h-1 rounded-full bg-blue-300 animate-pulse ${currentTime.getSeconds() % 3 === 0 ? 'opacity-100' : 'opacity-30'}`}></div>
+                <div className={`w-2 h-2 rounded-full bg-blue-400 animate-pulse ${currentTime.getSeconds() % 2 === 1 ? 'opacity-100' : 'opacity-50'}`}></div>
+              </div>
+            </div>
+          )
+        })()}
       </motion.div>
 
       {/* 主要签到按钮 */}

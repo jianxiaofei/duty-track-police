@@ -1,0 +1,549 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 默认主题变量 */
+  --theme-primary: #374151;
+  --theme-secondary: #4B5563;
+  --theme-accent: #F59E0B;
+  --theme-glass: rgba(75, 85, 99, 0.15);
+  --theme-glass-border: rgba(156, 163, 175, 0.2);
+  --theme-text-primary: #F9FAFB;
+  --theme-text-secondary: #D1D5DB;
+  --theme-text-muted: #9CA3AF;
+  --theme-success: #10B981;
+  --theme-warning: #F59E0B;
+  --theme-error: #EF4444;
+  --theme-info: #3B82F6;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 设备外壳样式 */
+.device-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #2d3748 0%, #1a202c 100%);
+  padding: 20px;
+  overflow: hidden;
+}
+
+.device-frame {
+  width: 1320px;
+  height: 760px;
+  background: linear-gradient(145deg, #2d3748, #4a5568);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 
+    0 50px 100px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  animation: deviceBreath 4s ease-in-out infinite;
+}
+
+.device-frame::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.device-screen {
+  width: 1280px;
+  height: 720px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  box-shadow: 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 50px rgba(0, 0, 0, 0.3);
+}
+
+.device-brand {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #a0aec0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  z-index: 20;
+}
+
+.device-indicator {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  width: 8px;
+  height: 8px;
+  background: #48bb78;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #48bb78;
+  animation: pulse 2s infinite;
+  z-index: 20;
+}
+
+.device-ports {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 5;
+}
+
+.device-port {
+  width: 20px;
+  height: 4px;
+  background: #2d3748;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.device-app-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 10;
+}
+
+/* 设备呼吸灯效果 */
+@keyframes deviceBreath {
+  0%, 100% { 
+    box-shadow: 
+      0 50px 100px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  }
+  50% { 
+    box-shadow: 
+      0 50px 100px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  min-height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.glass-effect {
+  background: var(--theme-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--theme-glass-border);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s ease;
+  transform: translateY(0);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.success-animation {
+  animation: success-pulse 0.6s ease-in-out;
+}
+
+.error-animation {
+  animation: error-shake 0.6s ease-in-out;
+}
+
+@keyframes success-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.digital-clock {
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.police-badge {
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.record-item {
+  transition: all 0.2s ease;
+}
+
+.record-item:hover {
+  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 脉冲动画 */
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* 浮动动画 */
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 旋转光晕效果 */
+.rotating-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.rotating-glow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    rgba(59, 130, 246, 0.3),
+    transparent,
+    rgba(59, 130, 246, 0.3),
+    transparent
+  );
+  animation: rotate 4s linear infinite;
+  border-radius: inherit;
+}
+
+.rotating-glow::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: inherit;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 闪烁效果 */
+.blink-animation {
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* 渐变文字效果 */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 阴影发光效果 */
+.glow-effect {
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
+}
+
+/* 主题切换支持 */
+.light-theme {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%) !important;
+}
+
+.light-theme .glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .text-white {
+  color: #1f2937 !important;
+}
+
+.light-theme .text-white\/60 {
+  color: #6b7280 !important;
+}
+
+.light-theme .text-white\/70 {
+  color: #4b5563 !important;
+}
+
+.light-theme .text-blue-200 {
+  color: #2563eb !important;
+}
+
+.light-theme .text-blue-300 {
+  color: #1d4ed8 !important;
+}
+
+.light-theme .text-purple-200 {
+  color: #7c3aed !important;
+}
+
+.light-theme .text-purple-300 {
+  color: #6d28d9 !important;
+}
+
+.light-theme .text-green-200 {
+  color: #16a34a !important;
+}
+
+.light-theme .text-green-300 {
+  color: #15803d !important;
+}
+
+.light-theme .text-yellow-200 {
+  color: #d97706 !important;
+}
+
+.light-theme .text-yellow-400\/60 {
+  color: #f59e0b !important;
+}
+
+/* 主题切换过渡动画 */
+.theme-transition {
+  transition: background 0.5s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 平滑切换效果 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 主题切换按钮动画 */
+.theme-toggle {
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: rotate(180deg);
+}
+
+/* 设置面板动画增强 */
+.settings-panel {
+  animation: slideInFromRight 0.5s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 切换开关动画 */
+.toggle-switch {
+  transition: all 0.3s ease;
+}
+
+.toggle-switch:checked {
+  animation: toggleBounce 0.3s ease;
+}
+
+@keyframes toggleBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* 通知系统增强动画 */
+.notification-enter {
+  animation: notificationSlideIn 0.4s ease-out;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+@keyframes notificationSlideIn {
+  from {
+    transform: translateX(100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.notification-exit {
+  animation: notificationSlideOut 0.2s ease-in;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+@keyframes notificationSlideOut {
+  from {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%) scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 确保内容区域滚动条样式 */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 内容区域平滑滚动 */
+.overflow-y-auto {
+  scroll-behavior: smooth;
+}
+
+/* 响应式调整 */
+@media (max-width: 1400px) {
+  .device-frame {
+    width: 95vw;
+    height: calc(95vw * 0.5625);
+    max-width: 1320px;
+    max-height: 760px;
+  }
+  
+  .device-screen {
+    width: 100%;
+    height: calc(100% - 40px);
+  }
+}
+
+@media (max-width: 768px) {
+  .device-container {
+    padding: 10px;
+  }
+  
+  .device-frame {
+    padding: 10px;
+    border-radius: 16px;
+  }
+  
+  .device-screen {
+    border-radius: 8px;
+    height: calc(100% - 20px);
+  }
+  
+  .device-brand {
+    font-size: 8px;
+  }
+}
